@@ -1,0 +1,6 @@
+project/
+├── main.cpp
+├── main_window.h / main_window.cpp
+├── app.h / app.cpp
+├── renderer.h / renderer.cpp
+└── sudoku_core.h / sudoku_core.cpp

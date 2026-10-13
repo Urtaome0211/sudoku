@@ -30,11 +30,12 @@
 ## 目录结构
 
 ```
-├── main.cpp / engine.h / engine.cpp  —— 入口、QML 后端单例（盘面/选择/冲突/操作）
-├── Main.qml                          —— 桌面版扁平化界面
-├── qtquickcontrols2.conf             —— Fluent WinUI3 控件风格
-├── sudoku_core.h / sudoku_core.cpp   —— 校验 / 求解 / 题目生成（纯算法，无 UI 依赖）
-├── CMakeLists.txt                    —— 桌面版构建
+├── qt/                                 —— 桌面版（Qt 6 + QML）
+│   ├── main.cpp / engine.h / engine.cpp  —— 入口、QML 后端单例（盘面/选择/冲突/操作）
+│   ├── Main.qml                          —— 桌面版扁平化界面
+│   ├── qtquickcontrols2.conf             —— Fluent WinUI3 控件风格
+│   ├── sudoku_core.h / sudoku_core.cpp   —— 校验 / 求解 / 题目生成（纯算法，无 UI 依赖）
+│   └── CMakeLists.txt                    —— 桌面版构建
 ├── web/
 │   ├── index.html                    —— 网页版页面结构
 │   ├── style.css                     —— 扁平化样式（与桌面版同款配色）
@@ -50,7 +51,7 @@
 要求：Qt 6.5+（`Quick`、`QuickControls2` 组件）、CMake 3.20+、C++17 编译器。
 
 ```powershell
-cmake -S . -B build-qt -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=D:/Qt/<版本>/<套件>
+cmake -S qt -B build-qt -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=D:/Qt/<版本>/<套件>
 cmake --build build-qt
 build-qt\sudoku_gui.exe
 ```
@@ -58,7 +59,7 @@ build-qt\sudoku_gui.exe
 Windows 发布部署（把 Qt 运行库与 QML 模块复制到 exe 目录，`--qmldir` 必须带，否则 FluentWinUI3 样式不部署）：
 
 ```powershell
-windeployqt --release --no-translations --qmldir . build-qt\sudoku_gui.exe
+windeployqt --release --no-translations --qmldir qt build-qt\sudoku_gui.exe
 ```
 
 无窗口回归自检（离屏渲染三种场景并截图）：

@@ -1,86 +1,94 @@
-# 数独求解器（C++ / Win32 GUI）
+# 数独求解器（Sudoku Solver）
 
-一个带图形界面的数独暴力破解器。手动填数，一键求解。基于 Win32 API，无第三方依赖，编译即用。
+一个扁平风格的数独程序，包含两个版本：
 
-## 特性
+- **桌面版**：Qt 6 + QML（Quick Controls FluentWinUI3 风格），支持 Windows / Linux / macOS；
+- **网页版**：纯 HTML/CSS/JS，零依赖、零构建，浏览器双击即玩。
 
-- **Win32 图形界面**：鼠标点击选中格子，键盘 `1-9` 填数，方向键移动，`Backspace` 清空
-- **一键求解**：回溯 + MRV（最少候选数优先）启发式，配合位掩码判重
-- **颜色区分**：黑色为题目给定数字，蓝色为程序求解结果
-- **模块化设计**：算法与界面完全解耦，`sudoku_core` 零 Windows 依赖，可单独复用
-- **零依赖**：仅用 Win32 API，无需 Qt / MFC
+两个版本共享同一套算法设计：位掩码 + MRV 回溯求解，挖洞法随机出题（唯一解保证），四档难度。
+
+## 功能特性
+
+- **随机新题**：简单 / 中等 / 困难 / 专家四档难度（提示数 42 / 34 / 28 / 24），逐格挖洞验证唯一解；
+- **一键求解**：MRV 启发式回溯，秒级求解，求解结果以蓝色显示；
+- **冲突高亮**：行 / 列 / 宫重复实时标红，冲突时拒绝求解并给出提示；
+- **灵活输入**：点选格子 + 键盘（`1-9`、小键盘、方向键、`Backspace`/`Delete`）+ 屏幕数字键盘；
+- **示例题目 / 清空**：一键载入内置示例或清空盘面；
+- **扁平化界面**：桌面版与网页版同款配色体系。
+
+## 截图
+
+**桌面版（Qt Quick + FluentWinUI3）**
+
+![桌面版-示例题目](shot-sample.png)
+![桌面版-专家难度](shot-expert.png)
+
+**网页版（零依赖）**
+
+![网页版](web-shot.png)
 
 ## 目录结构
 
-```text
-project/
-├── main.cpp            程序入口
-├── main_window.h/.cpp  窗口类注册与消息处理
-├── app.h/.cpp          应用状态与操作
-├── renderer.h/.cpp     绘制逻辑
-└── sudoku_core.h/.cpp  求解算法（无 Windows 依赖）
+```
+├── main.cpp / engine.h / engine.cpp  —— 入口、QML 后端单例（盘面/选择/冲突/操作）
+├── Main.qml                          —— 桌面版扁平化界面
+├── qtquickcontrols2.conf             —— Fluent WinUI3 控件风格
+├── sudoku_core.h / sudoku_core.cpp   —— 校验 / 求解 / 题目生成（纯算法，无 UI 依赖）
+├── CMakeLists.txt                    —— 桌面版构建
+├── web/
+│   ├── index.html                    —— 网页版页面结构
+│   ├── style.css                     —— 扁平化样式（与桌面版同款配色）
+│   ├── app.js                        —— 算法 1:1 移植 + 交互逻辑
+│   └── test.js                       —— Node 算法自检
+├── doc.txt                           —— 构建 / 部署 / 自检说明
+├── blog-数独求解器.md                —— 博客：Win32 原生版实现
+└── blog-数独求解器重构记.md          —— 博客：Win32 → Qt Quick + 网页版重构
 ```
 
-## 求解算法
+## 桌面版构建
 
-- **位掩码判重**：每行、每列、每宫各用一个 9 位整数记录已出现的数字，判断候选数只需一次位运算
-- **MRV 启发式**：每步优先处理候选数最少的空格，大幅剪枝
-- **冲突预检查**：求解前先校验题目本身是否矛盾
+要求：Qt 6.5+（`Quick`、`QuickControls2` 组件）、CMake 3.20+、C++17 编译器。
 
-实测在难题上，MRV 能把搜索节点数降低几个数量级。
+```powershell
+cmake -S . -B build-qt -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=D:/Qt/<版本>/<套件>
+cmake --build build-qt
+build-qt\sudoku_gui.exe
+```
 
-## 编译
+Windows 发布部署（把 Qt 运行库与 QML 模块复制到 exe 目录，`--qmldir` 必须带，否则 FluentWinUI3 样式不部署）：
 
-### MinGW-w64 / g++
+```powershell
+windeployqt --release --no-translations --qmldir . build-qt\sudoku_gui.exe
+```
+
+无窗口回归自检（离屏渲染三种场景并截图）：
+
+```powershell
+set QT_QPA_PLATFORM=offscreen
+build-qt\sudoku_gui.exe --screenshot shot.png --scenario sample   # sample | expert | solved
+```
+
+## 网页版运行
+
+直接双击 `web/index.html` 用浏览器打开即可，无需构建、无需服务器。
+
+算法自检（20 余项断言：唯一解、难度提示数、求解/冲突处理）：
 
 ```bash
-g++ -O2 -std=c++17 -mwindows \
-    main.cpp main_window.cpp app.cpp renderer.cpp sudoku_core.cpp \
-    -o sudoku_gui.exe -lgdi32 -luser32
+node web/test.js
 ```
 
-### CMake（推荐，Windows / VS 通用）
+## 算法说明
 
-```cmake
-cmake_minimum_required(VERSION 3.20)
-project(SudokuGui LANGUAGES CXX)
+- **求解**：位掩码记录行列宫占用，MRV（最少剩余候选）启发式选格回溯，2000 万节点安全阀防止病态输入卡死；
+- **出题**：挖洞法 —— 随机填满完整盘 → 随机顺序挖空 → 每挖一格数解数（数到 2 即停）验证唯一解，不唯一则填回；
+- **难度**：由提示数定义（42 / 34 / 28 / 24），困难 / 专家档给更多重试机会。
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+## 相关文章
 
-add_executable(sudoku_gui WIN32
-    main.cpp main_window.cpp app.cpp renderer.cpp sudoku_core.cpp)
-
-target_link_libraries(sudoku_gui PRIVATE user32 gdi32)
-
-if (MSVC)
-    target_compile_options(sudoku_gui PRIVATE /utf-8)
-endif()
-```
-
-用 VS 打开该文件夹即可一键构建（`WIN32` 关键字会自动设置 `/SUBSYSTEM:WINDOWS`）。
-
-## Visual Studio 导入提示
-
-如果手动建项目导入源码，注意以下几点：
-
-- **PCH 要统一**：项目开着预编译头就必须每个 `.cpp` 第一行 `#include "pch.h"`；没有 `pch.h` 就在属性里关掉 PCH。二者必须同时成立或不成立，否则会报 `C2065` / `C1083`。
-- **子系统**：链接器 → 系统 → 子系统 = **窗口 (/SUBSYSTEM:WINDOWS)**
-- **所有 `.cpp` 都要加入项目**：拷贝文件 ≠ 加入项目，缺文件会在链接时报 `LNK2019`
-- **头文件自包含**：`renderer.h` 和 `main_window.h` 自己包含 `windows.h`，不依赖调用方的包含顺序
-- **编码**：源文件保存为 UTF-8 with BOM，避免中文注释乱码
-
-## 使用
-
-1. 启动程序
-2. 点击格子，按 `1-9` 填数；按 `Backspace` 清空
-3. 点「求解」得到答案（蓝色数字）
-
-内置一道示例题目，点「示例题目」即可载入。
-
+- [blog-数独求解器.md](blog-数独求解器.md) —— 从零写一个 Windows 原生数独求解器（Win32 + 位掩码回溯）
+- [blog-数独求解器重构记.md](blog-数独求解器重构记.md) —— 从 Win32 到 Qt Quick 与网页版的重构历程
 
 ## License
 
-MIT
-
----
+[MIT](LICENSE)

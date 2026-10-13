@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数独求解器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="app">
+    <header class="title-block">
+        <h1>数独</h1>
+        <p class="subtitle">扁平风格 · 键盘与鼠标均可操作</p>
+    </header>
+
+    <section class="board-card">
+        <div id="board" class="board" aria-label="数独棋盘"></div>
+    </section>
+
+    <section class="row">
+        <span class="row-label">难度</span>
+        <div class="btn-group" id="diff-group"></div>
+    </section>
+
+    <section class="row">
+        <span class="row-label">操作</span>
+        <div class="btn-group">
+            <button class="btn primary" id="btn-new">新游戏</button>
+            <button class="btn" id="btn-sample">示例题目</button>
+            <button class="btn" id="btn-solve">求解</button>
+            <button class="btn" id="btn-clear">清空</button>
+        </div>
+    </section>
+
+    <section class="row">
+        <div class="btn-group pad" id="pad-group"></div>
+    </section>
+
+    <footer id="status" class="status"></footer>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

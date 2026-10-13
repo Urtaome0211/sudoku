@@ -1,6 +1,32 @@
 project/
-├── main.cpp
-├── main_window.h / main_window.cpp
-├── app.h / app.cpp
-├── renderer.h / renderer.cpp
-└── sudoku_core.h / sudoku_core.cpp
+├── main.cpp                     —— 入口、单例注册、离屏截图自检参数
+├── engine.h / engine.cpp        —— QML 后端单例（盘面/选择/冲突/操作）
+├── Main.qml                     —— 扁平化界面（棋盘、难度、操作、数字键盘）
+├── qtquickcontrols2.conf        —— Fluent WinUI3 控件风格
+├── sudoku_core.h / sudoku_core.cpp —— 校验 / 求解 / 题目生成
+├── CMakeLists.txt
+├── blog-数独求解器.md            —— 博客：Win32 原生版实现
+├── blog-数独求解器重构记.md       —— 博客：Win32 → Qt Quick + 网页版重构
+└── web/                         —— 网页版（纯 HTML/CSS/JS，零依赖）
+    ├── index.html               —— 页面结构
+    ├── style.css                —— 扁平化样式（与桌面版同款配色）
+    ├── app.js                   —— 算法 1:1 移植自 sudoku_core.cpp + 交互逻辑
+    └── test.js                  —— Node 算法自检（node test.js）
+
+构建（在 vcvars64 环境下）：
+  cmake -S . -B build-qt -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=D:/Qt/6.12.0/msvc2022_64
+  cmake --build build-qt
+  windeployqt --release --no-translations --qmldir . build-qt\sudoku_gui.exe
+  （最后一步就地部署 Qt 运行库与 QML 模块，否则直接双击 exe 会因找不到 Qt6*.dll 报错；改 Qt 模块后重跑一次即可）
+部署（独立发布版，已部署于 dist\，双击 dist\sudoku_gui.exe 即可运行）：
+  windeployqt --release --no-translations --qmldir . dist\sudoku_gui.exe
+  （首次部署时先复制 exe 到 dist\ 再执行；--qmldir 必须带，否则 QML 模块与 FluentWinUI3 样式不会被部署）
+自检截图（无窗口弹出）：
+  set QT_QPA_PLATFORM=offscreen
+  build-qt\sudoku_gui.exe --screenshot shot.png [--scenario sample|expert|solved]
+
+网页版：
+  直接双击 web\index.html 用浏览器打开即可（无需构建、无需服务器）。
+  功能与桌面版一致：四档难度随机新题（唯一解保证）、示例题目、求解、清空、
+  冲突红色高亮、点选/键盘/数字键输入。
+  自检：node web\test.js（校验/求解/生成唯一性各 20 余项断言）

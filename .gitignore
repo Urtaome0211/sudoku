@@ -1,0 +1,16 @@
+# 构建产物
+build-qt/
+dist/
+out/
+build/
+.vs/
+
+# CMake
+CMakeUserPresets.json
+
+# 编辑器 / 系统
+*.user
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini

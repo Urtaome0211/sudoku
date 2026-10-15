@@ -23,9 +23,14 @@ project/
 部署（独立发布版，已部署于 dist\，双击 dist\sudoku_gui.exe 即可运行）：
   windeployqt --release --no-translations --qmldir qt dist\sudoku_gui.exe
   （首次部署时先复制 exe 到 dist\ 再执行；--qmldir 必须带，否则 QML 模块与 FluentWinUI3 样式不会被部署）
-自检截图（无窗口弹出）：
-  set QT_QPA_PLATFORM=offscreen
+自检截图：
   build-qt\sudoku_gui.exe --screenshot shot.png [--scenario sample|expert|solved]
+  （默认用真实窗口平台截图，字形与运行效果一致，窗口会短暂闪现约 0.6 秒）
+  无窗口模式（CI 友好）：
+  set QT_QPA_PLATFORM=offscreen
+  build-qt\sudoku_gui.exe --screenshot shot.png --scenario sample
+  （offscreen/minimal 平台走基础字体引擎、Qt 已不再内置字体，找不到字体目录时所有文字会渲染成
+    空心方框；main.cpp 启动时已自动把 QT_QPA_FONTDIR 指向系统字体目录兜底）
 
 网页版：
   直接双击 web\index.html 用浏览器打开即可（无需构建、无需服务器）。

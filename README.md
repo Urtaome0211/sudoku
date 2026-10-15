@@ -62,11 +62,17 @@ Windows 发布部署（把 Qt 运行库与 QML 模块复制到 exe 目录，`--q
 windeployqt --release --no-translations --qmldir qt build-qt\sudoku_gui.exe
 ```
 
-无窗口回归自检（离屏渲染三种场景并截图）：
+回归自检（渲染三种场景并截图）：
+
+```powershell
+build-qt\sudoku_gui.exe --screenshot shot.png --scenario sample   # sample | expert | solved
+```
+
+需要无窗口运行时（CI 友好）改用离屏平台即可；程序会自动把 `QT_QPA_FONTDIR` 指向系统字体目录，否则离屏渲染的文字会变成空心方框：
 
 ```powershell
 set QT_QPA_PLATFORM=offscreen
-build-qt\sudoku_gui.exe --screenshot shot.png --scenario sample   # sample | expert | solved
+build-qt\sudoku_gui.exe --screenshot shot.png --scenario sample
 ```
 
 ## 网页版运行
